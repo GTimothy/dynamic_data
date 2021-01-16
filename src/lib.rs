@@ -37,11 +37,14 @@ impl<T, D: DataLoader<T>> DynamicData<T, D> {
     }
 
     pub fn fetch_next(&mut self, n: isize) {
-        let from = self.current_start + (self.data.len() as isize);
-        let data_to_add = self.data_source.get_next_n(n, from);
+        let mut from = self.current_start + (self.data.len() as isize);
+        let _n = n.min(self.capacity as isize);
+        from = from + n - _n;
+        let data_to_add = self.data_source.get_next_n(_n, from);
         let over_capacity = (data_to_add.len() + self.data.len()) as isize - self.capacity as isize;
 
         if over_capacity > 0 {
+
             self.data = self.data.split_off(over_capacity as usize);
             self.current_start += over_capacity as isize;
         }
@@ -50,8 +53,10 @@ impl<T, D: DataLoader<T>> DynamicData<T, D> {
     }
 
     pub fn fetch_previous(&mut self, n: isize) {
-        let from = self.current_start;
-        let mut data_to_add = self.data_source.get_previous_n(n, from);
+        let mut from = self.current_start;
+        let _n = n.min(self.capacity as isize);
+        from = from + n - _n;
+        let mut data_to_add = self.data_source.get_previous_n(_n, from);
         self.current_start -= data_to_add.len() as isize;
         self.data.reverse();
         data_to_add.reverse();
